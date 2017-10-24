@@ -1,0 +1,16 @@
+# Common subroutines for all tools.
+
+SU_MSGTOOLS_CFGDIR=~/.su-messaging-tools
+SU_MSGTOOLS_RC=${SU_MSGTOOLS_CFGDIR}/config
+
+echo_stderr() {
+	(>&2 echo "$@")
+}
+
+if [ -f ${SU_MSGTOOLS_RC} ] ; then
+	. ${SU_MSGTOOLS_RC}
+else
+	echo_stderr ${SU_MSGTOOLS_RC} does not exist.
+	exit 10
+fi
+
