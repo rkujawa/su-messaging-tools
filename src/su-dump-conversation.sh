@@ -21,6 +21,7 @@ echo_stderr() {
 	(>&2 echo "$@")
 }
 
+# Log in, obtain session cookie and save it to $SU_COOKIE_JAR.
 su_login() {
 	local SU_LOGIN_POST_DATA="--data-raw email=$SU_LOGIN -d password=$SU_PASS -d submitLogin=Zaloguj"
 
@@ -35,11 +36,21 @@ su_login() {
 	fi
 }
 
+# Download recent messages in a conversation ${SU_CONVERSATION_ID}.
 su_talk_get() {
 	mkdir -p ${SU_MSGTOOLS_WORKDIR}
 	local TALKFILE=${SU_MSGTOOLS_WORKDIR}/${SU_CONVERSATION_ID}-$(date +%s)
 
-	curl -A "$UA" -v $SU_ADD_COOKIES -b $SU_COOKIE_JAR -o $TALKFILE ${SU_GET_TALK_URL}${SU_CONVERSATION_ID}
+	curl -A "$UA" --silent $SU_ADD_COOKIES -b $SU_COOKIE_JAR -o $TALKFILE -D ${TALKFILE}.headers ${SU_GET_TALK_URL}${SU_CONVERSATION_ID}
+
+	if grep -q "^Content-Type: application/json" ${TALKFILE}.headers ; then
+		echo $TALKFILE
+		rm ${TALKFILE}.headers
+	else
+		echo_stderr Downloading failed, investigate ${TALKFILE}.headers
+		exit 30
+	fi
+
 }
 
 if [ -f ${SU_MSGTOOLS_RC} ] ; then
