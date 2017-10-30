@@ -3,9 +3,13 @@
 SU_MSGTOOLS_CFGDIR=~/.su-messaging-tools
 SU_MSGTOOLS_RC=${SU_MSGTOOLS_CFGDIR}/config
 
+SU_MSGTOOL_DUMP=su-conversation-dump.sh
+SU_MSGTOOLS_CONVLOG_DIR=${SU_MSGTOOLS_CFGDIR}/logs
+
 echo_stderr() {
 	(>&2 echo "$@")
 }
+
 
 if [ -f ${SU_MSGTOOLS_RC} ] ; then
 	. ${SU_MSGTOOLS_RC}
