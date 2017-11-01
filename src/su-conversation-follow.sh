@@ -9,7 +9,6 @@ conversation_array_length() {
 conversation_message_get_last() {
 	conversation_array_length $1
 	LASTMSG=$(jq ".[$((CONV_ARRAY_LEN-1))]" $1)
-	echo $LASTMSG
 }
 
 conversation_log_path_prep() {
@@ -31,6 +30,8 @@ conversation_log_populate_from_dump() {
 }
 
 # Process the dump, extract new messages and append them to log file.
+#
+# Try to be smart about it. Or at least not completely dumb.
 messages_dump_process() {
 	conversation_log_path_prep
 
@@ -42,7 +43,62 @@ messages_dump_process() {
 		conversation_log_populate_from_dump
 	else
 		conversation_message_get_last $CONVERSATION_LOGFILE
+		echo_stderr Last logged message: $LASTMSG
+
+		messages_dump_check_fresh $DUMP_FILE
+
+		if [ $? -eq 1 ] ; then
+			echo_stderr Log file does not contain any messages from dump, possibly some messages were lost.
+		fi
+
+		if [ $LASTFRESHIDX -eq 0 ] ; then
+			echo_stderr No new messages.
+			return
+		fi
+		echo_stderr Messages up to $LASTFRESHIDX are fresh. Copying to log.
+		messages_dump_extract_fresh $LASTFRESHIDX
+
+		# XXX: add notification hooks
+
+		messages_dump_fresh_conversation_log
 	fi	
+}
+
+# Extract messages from dump, reverse array order, save to temporary file.
+messages_dump_extract_fresh() {
+	DUMP_NEWMSGS=${DUMP_FILE}.fresh	
+	jq ".[0:${LASTFRESHIDX}]|reverse" $DUMP_FILE > $DUMP_NEWMSGS
+}
+
+messages_dump_fresh_conversation_log() {
+	local CONVERSATION_LOGFILE_TMP=${CONVERSATION_LOGFILE}.tmp
+	jq -s add $CONVERSATION_LOGFILE $DUMP_NEWMSGS > $CONVERSATION_LOGFILE_TMP
+	if [ -f $CONVERSATION_LOGFILE_TMP ] ; then
+		mv -v $CONVERSATION_LOGFILE_TMP $CONVERSATION_LOGFILE
+	fi
+}
+
+# Check which messages in the dump are fresh (i.e. do not appear in our
+# local log file). Get the index of last fresh message, so that we can
+# safely copy the array.
+messages_dump_check_fresh() {
+
+	local i=0
+
+	conversation_array_length $DUMP_FILE 
+	DUMP_LEN=$CONV_ARRAY_LEN
+
+	while [ $i -lt $DUMP_LEN ] ; do
+		CURMSG=$(jq ".[${i}]" $DUMP_FILE)
+		LASTFRESHIDX=$i
+		if [ "$CURMSG" == "$LASTMSG" ] ; then
+			return 0
+		fi
+
+		i=$((i+1))
+	done
+
+	return 1
 }
 
 message_json_to_var() {
@@ -66,8 +122,12 @@ messages_dump_get() {
 }
 
 messages_dump_remove() {
-	rm -v $DUMP_FILE
+	if [ ! -z "${DUMP_FILE}" ] ; then
+		rm -v ${DUMP_FILE}*
+	fi
 }
+
+# XXX: add lock for conversation log
 
 CONV_ID=$1
 
@@ -75,5 +135,5 @@ messages_dump_get ${CONV_ID}
 echo $DUMP_FILE
 messages_dump_process ${DUMP_FILE}
 
-#messages_dump_remove ${DUMP_FILE}
+messages_dump_remove ${DUMP_FILE}
 
