@@ -67,7 +67,10 @@ messages_dump_process() {
 		echo_stderr Messages up to $LASTFRESHIDX are fresh. Copying to log.
 		messages_dump_extract_fresh $LASTFRESHIDX
 
-		# XXX: add notification hooks
+		if [ ! -z ${SU_NOTIFY_HOOK+x} ] ; then
+			export DUMP_NEWMSGS CONVID LASTFRESHIDX
+			$SU_NOTIFY_HOOK
+		fi
 
 		messages_dump_fresh_conversation_log
 	fi	
