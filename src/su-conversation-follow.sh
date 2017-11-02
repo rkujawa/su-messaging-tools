@@ -75,6 +75,8 @@ messages_dump_fresh_conversation_log() {
 	jq -s add $CONVERSATION_LOGFILE $DUMP_NEWMSGS > $CONVERSATION_LOGFILE_TMP
 	if [ -f $CONVERSATION_LOGFILE_TMP ] ; then
 		mv -v $CONVERSATION_LOGFILE_TMP $CONVERSATION_LOGFILE
+	else
+		echo_stderr Failed to add messages from dump to log.
 	fi
 }
 
