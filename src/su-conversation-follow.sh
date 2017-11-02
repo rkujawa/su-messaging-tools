@@ -1,6 +1,9 @@
 #!/bin/bash
 . $(dirname $0)/su-conversation.subr
 
+MYDIR=$(dirname $0)
+#SU_MSG_VERBOSE=yes
+
 # Count the number of messages in an array. Currently very naive.
 conversation_array_length() {
 	CONV_ARRAY_LEN=$(jq 'length' $1)
@@ -43,7 +46,10 @@ messages_dump_process() {
 		conversation_log_populate_from_dump
 	else
 		conversation_message_get_last $CONVERSATION_LOGFILE
-		echo_stderr Last logged message: $LASTMSG
+
+		if [ "$SU_MSG_VERBOSE" == "yes" ] ; then
+			echo_stderr Last logged message: $LASTMSG
+		fi
 
 		messages_dump_check_fresh $DUMP_FILE
 
@@ -52,7 +58,10 @@ messages_dump_process() {
 		fi
 
 		if [ $LASTFRESHIDX -eq 0 ] ; then
-			echo_stderr No new messages.
+
+			if [ "$SU_MSG_VERBOSE" == "yes" ] ; then
+				echo_stderr No new messages.
+			fi
 			return
 		fi
 		echo_stderr Messages up to $LASTFRESHIDX are fresh. Copying to log.
@@ -74,7 +83,7 @@ messages_dump_fresh_conversation_log() {
 	local CONVERSATION_LOGFILE_TMP=${CONVERSATION_LOGFILE}.tmp
 	jq -s add $CONVERSATION_LOGFILE $DUMP_NEWMSGS > $CONVERSATION_LOGFILE_TMP
 	if [ -f $CONVERSATION_LOGFILE_TMP ] ; then
-		mv -v $CONVERSATION_LOGFILE_TMP $CONVERSATION_LOGFILE
+		mv ${SU_MSG_VERBOSE+"-v"} $CONVERSATION_LOGFILE_TMP $CONVERSATION_LOGFILE
 	else
 		echo_stderr Failed to add messages from dump to log.
 	fi
@@ -115,17 +124,18 @@ message_json_to_var() {
 }
 
 #message_display() {
-	
 #}
 
 messages_dump_get() {
-	DUMP_FILE=$(${SU_MSGTOOL_DUMP} talk-get ${1})
-#	echo ${SU_MSGTOOL_DUMP} talk-get ${1}
+	if [ "$SU_MSG_VERBOSE" == "yes" ] ; then
+		echo running: ${SU_MSGTOOL_DUMP} talk-get ${1}
+	fi
+	DUMP_FILE=$(${MYDIR}/${SU_MSGTOOL_DUMP} talk-get ${1})
 }
 
 messages_dump_remove() {
 	if [ ! -z "${DUMP_FILE}" ] ; then
-		rm -v ${DUMP_FILE}*
+		rm ${SU_MSG_VERBOSE+"-v"} ${DUMP_FILE}*
 	fi
 }
 
@@ -134,7 +144,7 @@ messages_dump_remove() {
 CONV_ID=$1
 
 messages_dump_get ${CONV_ID} 
-echo $DUMP_FILE
+#echo $DUMP_FILE
 messages_dump_process ${DUMP_FILE}
 
 messages_dump_remove ${DUMP_FILE}
