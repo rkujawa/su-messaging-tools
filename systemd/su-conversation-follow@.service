@@ -1,0 +1,9 @@
+# symlink this to ~/.config/systemd/user/
+[Unit]
+Description=Follow and log conversation ID %I on SU
+
+[Service]
+Type=oneshot
+# XXX fix path
+ExecStart=/home/rkujawa/repos/su-messaging-tools/src/su-conversation-follow.sh %I
+

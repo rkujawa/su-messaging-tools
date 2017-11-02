@@ -1,0 +1,7 @@
+[Unit]
+Description=Follow and log SU conversation ID %I (timer)
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=5m
+
