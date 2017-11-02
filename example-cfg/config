@@ -1,0 +1,6 @@
+# this goes into ~/.su-messaging-tools/config
+SU_LOGIN=foo%40bar.com
+SU_PASS=somepass123
+
+#SU_NOTIFY_HOOK=~/bin/su-msg-notify-twitter.sh
+
