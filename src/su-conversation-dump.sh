@@ -53,7 +53,7 @@ su_talk_get() {
 
 }
 
-
+# Handle command line arguments to the script.
 case "$1" in
 	login)
 		su_login

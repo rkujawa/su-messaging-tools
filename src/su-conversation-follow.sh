@@ -9,6 +9,7 @@ conversation_array_length() {
 	CONV_ARRAY_LEN=$(jq 'length' $1)
 }
 
+# Get last message object from message log/dump file specified as an argument.
 conversation_message_get_last() {
 	conversation_array_length $1
 	LASTMSG=$(jq ".[$((CONV_ARRAY_LEN-1))]" $1)
@@ -25,7 +26,7 @@ conversation_log_path_prep() {
 	fi
 }
 
-# Create a new conversation log file, copying messages from dump. JSON
+# Create a new conversation log file, by copying messages from dump. JSON
 # array from dump needs to be reversed since it contains messages in order
 # from newest to oldest (unlike typical log).
 conversation_log_populate_from_dump() {
@@ -67,6 +68,7 @@ messages_dump_process() {
 		echo_stderr Messages up to $LASTFRESHIDX are fresh. Copying to log.
 		messages_dump_extract_fresh $LASTFRESHIDX
 
+		# Run notification hook to let the user know about new messages.
 		if [ ! -z ${SU_NOTIFY_HOOK+x} ] ; then
 			export DUMP_NEWMSGS CONV_ID LASTFRESHIDX
 			$SU_NOTIFY_HOOK
@@ -126,9 +128,7 @@ message_json_to_var() {
 
 }
 
-#message_display() {
-#}
-
+# Obtain dump with recent messages from server - run dumping tool.
 messages_dump_get() {
 	if [ "$SU_MSG_VERBOSE" == "yes" ] ; then
 		echo running: ${SU_MSGTOOL_DUMP} talk-get ${1}
@@ -136,6 +136,8 @@ messages_dump_get() {
 	DUMP_FILE=$(${MYDIR}/${SU_MSGTOOL_DUMP} talk-get ${1})
 }
 
+# Delete dump file and potential temporary files created as a result of
+# processing.
 messages_dump_remove() {
 	if [ ! -z "${DUMP_FILE}" ] ; then
 		rm ${SU_MSG_VERBOSE+"-v"} ${DUMP_FILE}*
