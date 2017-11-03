@@ -68,7 +68,7 @@ messages_dump_process() {
 		messages_dump_extract_fresh $LASTFRESHIDX
 
 		if [ ! -z ${SU_NOTIFY_HOOK+x} ] ; then
-			export DUMP_NEWMSGS CONVID LASTFRESHIDX
+			export DUMP_NEWMSGS CONV_ID LASTFRESHIDX
 			$SU_NOTIFY_HOOK
 		fi
 
