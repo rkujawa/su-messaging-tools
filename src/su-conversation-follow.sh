@@ -147,9 +147,13 @@ messages_dump_remove() {
 # XXX: add lock for conversation log
 
 CONV_ID=$1
-
 messages_dump_get ${CONV_ID} 
-#echo $DUMP_FILE
+
+if [ $? -ne 0 ] ; then
+	echo Could not obtain dump, exiting.
+	exit 10
+fi
+
 messages_dump_process ${DUMP_FILE}
 
 messages_dump_remove ${DUMP_FILE}
